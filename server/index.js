@@ -19,7 +19,7 @@ const pool = new Pool({
 });
 
 // Route to get all tasks
-app.get('/tasks', async (req, res) => {
+app.get('/', async (req, res) => {
     try {
         const query = 'SELECT * FROM tasks;';
         const { rows } = await pool.query(query);
@@ -45,12 +45,9 @@ app.post('/new', (req, res) => {
     });
 });
 
-// Default route
-app.get('/', (req, res) => {
-    res.send('Hello World!');
-});
+
 
 // Start server
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
-}); j
+});

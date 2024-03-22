@@ -1,7 +1,7 @@
 ### get tasks
 
 
-GET /tasks HTTP/1.1
+GET / HTTP/1.1
 Host: localhost:3001
 
 ### get task by id

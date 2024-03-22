@@ -1,22 +1,59 @@
-function addTodo() {
-  var inputField = document.getElementById("todo-input");
-  var todoText = inputField.value.trim();
+const backendUrl = "http://localhost:3001";
 
-  if (todoText !== "") {
-      var todoList = document.getElementById("todo-list");
-      var newTodoItem = document.createElement("li");
-      newTodoItem.textContent = todoText;
-      newTodoItem.classList.add("todo-item");
-      todoList.appendChild(newTodoItem);
+const todoList = document.getElementById("todo-list");
+const inputField = document.getElementById("todo-input");
 
-      // Clear the input field after adding todo
-      inputField.value = "";
+
+
+
+const getTasks = async () => {
+  try{
+    const response = await fetch(backendUrl)
+    const json = await response.json()
+    json.forEach(task => {
+      renderTask(task.description)
+    })
+    inputField.disabled = false
+  } catch (error) {
+    console.error(error)
   }
+
 }
+const savetask = async (task) => {
+   try{
+    const response = await fetch(backendUrl +'/new', {
+      method: "post",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({description: task}),
+    })
+    return response.json();
+   } catch (error) {
+      console.error(error)
+    
+   }
+}
+
+const renderTask = (description) => {
+  const task = document.createElement("li");
+  task.textContent = description;
+  task.classList.add("todo-item");
+  todoList.appendChild(task);
+};
+
+
 
 document.getElementById("todo-input").addEventListener("keypress", function(event) {
   // Check if the Enter key is pressed
   if (event.key === "Enter") {
-      addTodo();
-  }
+    event.preventDefault();
+    const task = inputField.value.trim();
+    if (task !== "") {
+      savetask(task)
+      renderTask(task);
+      inputField.value = "";
+    }
+  } 
 });
+getTasks()
