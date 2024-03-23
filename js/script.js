@@ -1,16 +1,24 @@
+import { Todos } from "./class/todos.js";
+
 const backendUrl = "http://localhost:3001";
+const todos = new Todos(backendUrl);
 
 const todoList = document.getElementById("todo-list");
 const inputField = document.getElementById("todo-input");
 
 
+const renderTask = (description) => {
+  const task = document.createElement("li");
+  task.textContent = description;
+  task.classList.add("todo-item");
+  todoList.appendChild(task);
+}
 
 
 const getTasks = async () => {
   try{
-    const response = await fetch(backendUrl)
-    const json = await response.json()
-    json.forEach(task => {
+   const tasks = await todos.getTasks();
+    tasks.forEach(task => {
       renderTask(task.description)
     })
     inputField.disabled = false
@@ -35,16 +43,11 @@ const savetask = async (task) => {
    }
 }
 
-const renderTask = (description) => {
-  const task = document.createElement("li");
-  task.textContent = description;
-  task.classList.add("todo-item");
-  todoList.appendChild(task);
-};
 
 
 
-document.getElementById("todo-input").addEventListener("keypress", function(event) {
+
+inputField.addEventListener("keypress", function(event) {
   // Check if the Enter key is pressed
   if (event.key === "Enter") {
     event.preventDefault();
