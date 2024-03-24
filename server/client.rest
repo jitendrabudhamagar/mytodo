@@ -12,7 +12,7 @@ Content-Type: application/json
 {"description": "test muji rest client"}
 
 ### Delete tasks
-DELETE http://localhost:3001/delete/149 HTTP/1.1
+DELETE http://localhost:3001/delete/14 HTTP/1.1
 
 
 

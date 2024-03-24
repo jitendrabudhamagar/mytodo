@@ -1,9 +1,9 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
-const { Pool } = require('pg');
-
-
-
+//const { Pool } = require('pg');
+const {query} = require('./helpers/db');
 
 const app = express();
 app.use(cors());
@@ -17,41 +17,35 @@ const port = 3001;
 app.use(express.json());
 app.use(cors());
 
-// Database connection pool setup
-const pool = new Pool({
-    user: 'postgres',
-    host: 'localhost',
-    database: 'todo_database',
-    password: 'Finland@2061',
-    port: 5432,
-});
 
 // Route to get all tasks
 app.get('/', async (req, res) => {
+    console.log(query)
     try {
-        const query = 'SELECT * FROM tasks;';
-        const { rows } = await pool.query(query);
-        res.json(rows);
+        const result = await query('SELECT * FROM tasks');
+        const rows  =result.rows ? result.rows : [];
+        res.status(200).json(rows);
     } catch (error) {
-        console.error('Error retrieving tasks:', error);
-        res.status(200).json({ error: 'Internal Server Error' });
+        console.error( error);
+        res.statusMessage = error.message;
+        res.status(500).json({ error: error });
     }
 });
 
 // Route to create a new task
-app.post('/new', (req, res) => {
-    const { description } = req.body;
-    if (!description) {
-        return res.status(400).json({ error: 'Description is required' });
+app.post('/new', async (req, res) => {
+    try{
+        const result = await query('INSERT INTO tasks (description) VALUES ($1) RETURNING *', [req.body.description]);
+    
+        return res.status(200).json({ id: result.rows[0].id });
+    }
+    catch (error) {
+        console.error(error.message);
+        return res.status(500).json({ error: error.message });
     }
 
-    pool.query('INSERT INTO tasks (description) VALUES ($1) RETURNING *', [description], (error, result) => {
-        if (error) {
-            return res.status(500).json({ error: error.message });
-        }
-        res.status(200).json({ id: result.rows[0].id });
+   
     });
-});
 
 
 
@@ -62,15 +56,15 @@ app.listen(port, () => {
 
 app.delete("/delete/:id", async (req,res)=>{
     
-    const id  = parseInt(req.params.id)
-    pool.query
-    ('delete from tasks where id = $1', [id], (error, result) => {
-
-        if (error) {
-            res.status(500).json({ error: error.message });
-        }
-        else{
-            res.status(200).json({ id: id });
-        }
-})
+    const id  = Number(req.params.id)
+    try{
+    
+    const result = await query('DELETE FROM tasks WHERE id = $1 RETURNING *', [id]);
+    res.status(200).json({ id:id });
+    }
+    catch(error){
+    console.error(error);
+    res.statusMessage = error;
+    res.status(500).json({error:error.message});
+    }
 })
