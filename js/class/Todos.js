@@ -1,78 +1,70 @@
-import { Task } from './Task.js';
+import { Task } from './Tasks.js';
 
 class Todos {
     #tasks = [];
-    #backendUrl;
+    #backend_url = '';
 
     constructor(url) {
-        this.#backendUrl = url;
+        this.#backend_url = url;
     }
 
-    getTasks = async () => {
-        try {
-            const response = await fetch(this.#backendUrl);
-            const json = await response.json();
-            this.#readJson(json);
-            return this.#tasks;
-        } catch (error) {
-            throw new Error('Failed to fetch tasks: ' + error.message);
-        }
-    };
+    getTasks = () => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const response = await fetch(`${this.#backend_url}`);
+                const tasksJson = await response.json();
+                this.#readJson(tasksJson);
+                resolve(this.#tasks);
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
 
-    addTask = async (description) => {
+    addTask = async (text) => {
         try {
-            const response = await fetch(this.#backendUrl + '/new', {
+            const response = await fetch(`${this.#backend_url}/new`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ description: description })
+                body: JSON.stringify({ description: text })
             });
-            const json = await response.json();
-            return this.#addToArray(json.id, json.description);
+            const newTaskJson = await response.json();
+            return this.#addToArray(newTaskJson.id, newTaskJson.description);
         } catch (error) {
-            throw new Error('Failed to add task: ' + error.message);
+            throw new Error('Failed to save task');
         }
-    };
+    }
 
-    removeTask = (id) => {
-        return new Promise((resolve, reject) => {
-            fetch(this.#backendUrl + '/delete/' + id, {
+    removeTask = async (id) => {
+        try {
+            await fetch(`${this.#backend_url}/delete/${id}`, {
                 method: 'DELETE'
-            })
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error('Failed to delete task');
-                    }
-                    return response.json();
-                })
-                .then((json) => {
-                    this.#removeFromArray(id); 
-                    resolve(json.id);
-                })
-                .catch((error) => {
-                    reject(error.message);
-                });
-        });
-    };
-    
+            });
+            this.#removeFromArray(id);
+            return id;
+        } catch (error) {
+            throw new Error('Failed to remove task');
+        }
+    }
 
-    #readJson = (taskAsjson) => {
-        taskAsjson.forEach(task => {
-            const newTask = new Task(task.id, task.description);
-            this.#tasks.push(newTask);
+    #readJson = (tasksJson) => {
+        tasksJson.forEach(node => {
+            const task = new Task(node.id, node.description);
+            this.#tasks.push(task);
         });
-    };
-    
-    #addToArray = (id, description) => {
-        const newTask = new Task(id, description);
-        this.#tasks.push(newTask); 
-        return newTask;
-    };
-    
+    }
+
+    #addToArray = (id, text) => {
+        const task = new Task(id, text);
+        this.#tasks.push(task);
+        return task;
+    }
+
     #removeFromArray = (id) => {
-        this.#tasks = this.#tasks.filter(task => task.id !== id); // Fixed the property access here
-    };
+        this.#tasks = this.#tasks.filter(task => task.getId() !== id);
+    }
 }
 
 export { Todos };
